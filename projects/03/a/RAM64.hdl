@@ -15,5 +15,14 @@ CHIP RAM64 {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    DMux8Way(in = load, sel = address[3..5], a = aload, b = bload, c = cload, d = dload, e = eload, f = fload, g = gload, h = hload);
+    RAM8(in = in, load = aload, address = address[0..2], out = regouta);
+    RAM8(in = in, load = bload, address = address[0..2], out = regoutb);
+    RAM8(in = in, load = cload, address = address[0..2], out = regoutc);
+    RAM8(in = in, load = dload, address = address[0..2], out = regoutd);
+    RAM8(in = in, load = eload, address = address[0..2], out = regoute);
+    RAM8(in = in, load = fload, address = address[0..2], out = regoutf);
+    RAM8(in = in, load = gload, address = address[0..2], out = regoutg);
+    RAM8(in = in, load = hload, address = address[0..2], out = regouth);
+    Mux8Way16(a = regouta, b = regoutb, c = regoutc, d = regoutd, e = regoute, f = regoutf, g = regoutg, h = regouth, sel = address[3..5], out = out);
 }
