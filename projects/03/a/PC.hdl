@@ -25,6 +25,5 @@ CHIP PC {
     Mux16(a = inctest, b = firstout, sel = load, out = loadtest);
     Mux16(a = loadtest, b = resetout, sel = reset, out = resettest);
 
-    Register(in = resettest, load = true, out = regout);
-    Or16(a = regout, b = false, out = out);
+    Register(in = resettest, load = true, out = out, out = regout);
 }
