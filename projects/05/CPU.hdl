@@ -55,24 +55,20 @@ CHIP CPU {
      zy = instruction[9], ny = instruction[8], f = instruction[7],
       no = instruction[6], out = outALU, out = outM, zr = zr, ng = ng );
 
-    Not(in = instruction[5], out = not5);
-    Not(in = instruction[6], out = not6);
-    And(a = not5, b = not6, out = not56);
-
-    And(a = instruction[3], b = instruction[15], out = and315);
-
-    And(a = not56, b = and315, out = writeM);
+    And(a = instruction[3], b = instruction[15], out = writeM);
     
-    And(a = instruction[2], b = ng, out = ngand2);
-    And(a = instruction[1], b = zr, out = zrand1);
-    Not(in = ng, out = notng);
-    Not(in = zr, out = notzr);
-    And(a = notng, b = notzr, out = notngandnotzr);
-    And(a = instruction[0], b = instruction[15], out = and015);
-    And(a = notngandnotzr, b = and015, out = pcloadsecond);
+    Or(a = ng, b = zr, out = lte);
+    Not(in = lte, out = gt);
 
-    Or(a = ngand2, b = zrand1, out = pcloadfirst);
-    Or(a = pcloadfirst, b = pcloadsecond, out = pcload);
+    And(a = instruction[0], b = gt, out = jgt);
+    And(a = instruction[1], b = zr, out = jeq);
+    And(a = instruction[2], b = ng, out = jlt);
 
-    PC(in = outareg, reset = reset, load = pcload, inc = true, out[0..14] = pc);
+    Or(a = jlt, b = jeq, out = jle);
+    Or(a = jle, b = jgt, out = jmp);
+
+    And(a = instruction[15], b = jmp, out = pcload);
+    Not(in = pcload, out = pcinc);
+
+    PC(in = outareg, reset = reset, load = pcload, inc = pcinc, out[0..14] = pc);
 }
