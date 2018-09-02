@@ -40,4 +40,39 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    Mux16(a = instruction, b = outALU, sel = instruction[15], out = outinstruct);
+    Not(in = instruction[15], out = not15);
+    And(a = instruction[15], b = instruction[5], out = and515);
+    Or(a = not15, b = and515, out = aload);
+
+    ARegister(in = outinstruct, load = aload, out = outareg, out[0..14] = addressM);
+
+    Mux16(a = outareg, b = inM, sel = instruction[12], out = outinstm);
+    And(a = instruction[15], b = instruction[4], out = dload);
+    DRegister(in = outALU, load = dload, out = outDreg);
+
+    ALU(x = outDreg, y = outinstm, zx = instruction[11], nx = instruction[10],
+     zy = instruction[9], ny = instruction[8], f = instruction[7],
+      no = instruction[6], out = outALU, out = outM, zr = zr, ng = ng );
+
+    Not(in = instruction[5], out = not5);
+    Not(in = instruction[6], out = not6);
+    And(a = not5, b = not6, out = not56);
+
+    And(a = instruction[3], b = instruction[15], out = and315);
+
+    And(a = not56, b = and315, out = writeM);
+    
+    And(a = instruction[2], b = ng, out = ngand2);
+    And(a = instruction[1], b = zr, out = zrand1);
+    Not(in = ng, out = notng);
+    Not(in = zr, out = notzr);
+    And(a = notng, b = notzr, out = notngandnotzr);
+    And(a = instruction[0], b = instruction[15], out = and015);
+    And(a = notngandnotzr, b = and015, out = pcloadsecond);
+
+    Or(a = ngand2, b = zrand1, out = pcloadfirst);
+    Or(a = pcloadfirst, b = pcloadsecond, out = pcload);
+
+    PC(in = outareg, reset = reset, load = pcload, inc = true, out[0..14] = pc);
 }
