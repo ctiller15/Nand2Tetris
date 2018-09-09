@@ -1,4 +1,5 @@
 # This is an assembler made for project 6 of the nand to tetris course.
+import os
 import re
 
 # Initializing all relevant dictionaries.
@@ -58,8 +59,13 @@ jumpMap = {
     'JMP': '111',
 }
 
+fileName = './add/Add.asm'
+outfileName = f"{os.path.splitext(fileName)[0]}.hack"
+print(fileName)
+print(outfileName)
+
 #Opening file.
-f = open('./add/Add.asm', 'r')
+f = open(fileName, 'r')
 
 instructions = []
 
@@ -75,7 +81,7 @@ print(instructions)
 #First, identify if A instruction or C-instruction.
 
 def HandleAInstruction(instruction):
-    print('A instruction')
+    #print('A instruction')
     ainst = '0' + bin(int(instruction[1:]))[2:].zfill(15)
     return ainst
 
@@ -99,9 +105,9 @@ def HandleCInstruction(instruction):
 
 def HandleCompInstruction(instruction):
     if(instruction[0] in compAzero.keys()):
-        comp = '0' + compAzero[instruction[0]]
+        comp = '0' + compAzero[instruction]
     elif(instruction[0] in compAone.keys()):
-        comp = '1' + compAone[instruction[0]]
+        comp = '1' + compAone[instruction]
     return comp
 
 #Parser.
@@ -116,3 +122,11 @@ def Parser(instructions):
 
 parsedInstructions = Parser(instructions)
 print(parsedInstructions)
+
+f.close()
+
+# Writing to file.
+with open(outfileName, 'w') as g:
+    for line in parsedInstructions:
+        g.write(f"{line}\n")
+#g = open(outfileName, 'w')
