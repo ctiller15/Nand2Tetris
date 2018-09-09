@@ -1,7 +1,9 @@
 # This is an assembler made for project 6 of the nand to tetris course.
 import os
+import sys
 import re
 
+print(sys.argv[1])
 # Initializing all relevant dictionaries.
 compAzero = {
     '0': '101010',
@@ -59,7 +61,7 @@ jumpMap = {
     'JMP': '111',
 }
 
-fileName = './add/Add.asm'
+fileName = sys.argv[1]
 outfileName = f"{os.path.splitext(fileName)[0]}.hack"
 print(fileName)
 print(outfileName)
@@ -104,9 +106,9 @@ def HandleCInstruction(instruction):
     return f'111{HandleCompInstruction(comp)}{destMap[dest]}{jumpMap[jump]}'
 
 def HandleCompInstruction(instruction):
-    if(instruction[0] in compAzero.keys()):
+    if(instruction in compAzero.keys()):
         comp = '0' + compAzero[instruction]
-    elif(instruction[0] in compAone.keys()):
+    elif(instruction in compAone.keys()):
         comp = '1' + compAone[instruction]
     return comp
 
