@@ -2,91 +2,66 @@
 import os
 import sys
 import re
-
-print(sys.argv[1])
-# Initializing all relevant dictionaries.
-compAzero = {
-    '0': '101010',
-    '1': '111111',
-    '-1': '111010',
-    'D': '001100',
-    'A': '110000',
-    '!D': '001101',
-    '!A': '110001',
-    '-D': '001111',
-    '-A': '110011',
-    'D+1': '011111',
-    'A+1': '110111',
-    'D-1': '001110',
-    'A-1': '110010',
-    'D+A': '000010',
-    'D-A': '010011',
-    'A-D': '000111',
-    'D&A': '000000',
-    'D|A': '010101',
-}
-
-compAone = {
-    'M': '110000',
-    '!M': '110001',
-    '-M': '110011',
-    'M+1': '110111',
-    'M-1': '110010',
-    'D+M': '000010',
-    'D-M': '010011',
-    'M-D': '000111',
-    'D&M': '000000',
-    'D|M': '010101',
-}
-
-destMap = {
-    'null': '000',
-    'M': '001',
-    'D': '010',
-    'MD': '011',
-    'A': '100',
-    'AM': '101',
-    'AD': '110',
-    'AMD': '111',
-}
-
-jumpMap = {
-    'null': '000',
-    'JGT': '001',
-    'JEQ': '010',
-    'JGE': '011',
-    'JLT': '100',
-    'JNE': '101',
-    'JLE': '110',
-    'JMP': '111',
-}
+import mapVars
 
 fileName = sys.argv[1]
 outfileName = f"{os.path.splitext(fileName)[0]}.hack"
-print(fileName)
-print(outfileName)
 
 #Opening file.
 f = open(fileName, 'r')
 
 instructions = []
+labels = {}
+RAMsymbols = mapVars.RAMsymbols
 
 #Clearing out line comments and whitespace.
 for line in f:
+    templine = line
+    firstCommentInd = templine.find('//')
+    if(firstCommentInd >= 0):
+        templine = templine[0:firstCommentInd]
     if(line != "\n" and not(line.startswith('//'))):
-        instructions.append(line.strip())
+        templine = templine.strip()
+        instructions.append(templine)
 
-print(instructions)
+# Find all lines with symbols/labels.
+def findLabels(instructions):
+    for index, value in enumerate(instructions):
+        #If it is a label, add it to the labels dict.
+        if(value[0] == "("):
+            labels[value[1:-1]] = index - len(labels)
 
-# Parsing the individual sections for each instruction.
+def findRAMAddresses(instructions):
+    for inst in instructions:
+        if(inst[0] == "@"):
+            if(not(inst[1].isalpha()) or (inst[1:] in labels) or (inst[1:] in mapVars.specialLabels)):
+                pass
+            elif(inst[1:] not in RAMsymbols):
+                RAMsymbols[inst[1:]] = len(RAMsymbols)
 
-#First, identify if A instruction or C-instruction.
+def clearLabels(instructions):
+    clearedLabels = list(filter(lambda inst : inst[0] != '(', instructions))
+    return clearedLabels
 
+#Converts an A instruction.
 def HandleAInstruction(instruction):
-    #print('A instruction')
-    ainst = '0' + bin(int(instruction[1:]))[2:].zfill(15)
+    ainst = ""
+    if(instruction[1].isalpha()):
+        if(instruction[1:] in mapVars.specialLabels):
+            index = mapVars.specialLabels[instruction[1:]]
+            ainst = '0' + bin(int(index))[2:].zfill(15)
+        elif(instruction[1:] in RAMsymbols):
+            index = RAMsymbols[instruction[1:]]
+            ainst = '0' + bin(int(index))[2:].zfill(15)
+        else:
+            if(instruction[1:] in labels):
+                index = labels[instruction[1:]]
+                ainst = '0' + bin(int(index))[2:].zfill(15)
+    else:
+        ainst = '0' + bin(int(instruction[1:]))[2:].zfill(15)
     return ainst
 
+#Converts a C instruction.
 def HandleCInstruction(instruction):
     cdjinst = []
     comp = 'null'
@@ -103,13 +78,14 @@ def HandleCInstruction(instruction):
         comp, jump = cdjinst
     else:
         cdjinst = instruction
-    return f'111{HandleCompInstruction(comp)}{destMap[dest]}{jumpMap[jump]}'
+    return f'111{HandleCompInstruction(comp)}{mapVars.destMap[dest]}{mapVars.jumpMap[jump]}'
 
+# Manages the six bit computation instruction
 def HandleCompInstruction(instruction):
-    if(instruction in compAzero.keys()):
-        comp = '0' + compAzero[instruction]
-    elif(instruction in compAone.keys()):
-        comp = '1' + compAone[instruction]
+    if(instruction in mapVars.compAzero.keys()):
+        comp = '0' + mapVars.compAzero[instruction]
+    elif(instruction in mapVars.compAone.keys()):
+        comp = '1' + mapVars.compAone[instruction]
     return comp
 
 #Parser.
@@ -122,13 +98,15 @@ def Parser(instructions):
             parsed.append(HandleCInstruction(instr))
     return parsed
 
+findLabels(instructions)
+findRAMAddresses(instructions)
+instructions = clearLabels(instructions)
 parsedInstructions = Parser(instructions)
-print(parsedInstructions)
 
+parsedInstructions = list(filter(None, parsedInstructions))
 f.close()
 
-# Writing to file.
+#Writing to file.
 with open(outfileName, 'w') as g:
     for line in parsedInstructions:
         g.write(f"{line}\n")
-#g = open(outfileName, 'w')
