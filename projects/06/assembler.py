@@ -82,6 +82,7 @@ def HandleCInstruction(instruction):
 
 # Manages the six bit computation instruction
 def HandleCompInstruction(instruction):
+    comp = ""
     if(instruction in mapVars.compAzero.keys()):
         comp = '0' + mapVars.compAzero[instruction]
     elif(instruction in mapVars.compAone.keys()):
